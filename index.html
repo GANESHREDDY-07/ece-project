@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MessMind — Smart Food Waste Monitor</title>
+<style>
+:root {
+  --site-primary: #176B5B;
+  --site-on-primary: #FFFFFF;
+  --site-secondary: #E9B44C;
+  --site-on-secondary: #1D2A27;
+  --site-background: #F3F6F4;
+  --site-on-background: #18231F;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  --surface: light-dark(#FFFFFF, #1B2421);
+  --surface-2: light-dark(#F7FAF8, #222E29);
+  --muted: light-dark(#6B7B74, #A6B5AD);
+  --border: light-dark(#E0E9E3, #34443C);
+  --green-soft: light-dark(#E6F3EE, #233C32);
+  --amber-soft: light-dark(#FFF4D9, #453A23);
+  --red-soft: light-dark(#FCEAE6, #452D2A);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--site-font-body); background: var(--site-background); color: var(--site-on-background); }
+button, input, select { font: inherit; }
+.app { min-height: 100vh; background-color: var(--site-background); color: var(--site-on-background); border-radius: 0; }
+.topbar { background: var(--site-primary); color: var(--site-on-primary); padding: calc(18px * var(--site-spacing-scale)) clamp(18px, 4vw, 48px); display:flex; justify-content:space-between; align-items:center; gap:18px; }
+.brand { display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:-.04em; font-size:20px; }
+.brand-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:13px; background:rgba(255,255,255,.16); font-size:20px; }
+.top-meta { display:flex; align-items:center; gap:12px; color:rgba(255,255,255,.82); font-size:13px; }
+.live-dot { width:8px; height:8px; display:inline-block; border-radius:50%; background:#8DE0B4; margin-right:6px; box-shadow:0 0 0 4px rgba(141,224,180,.14); }
+.layout { max-width:1440px; margin:auto; padding:28px clamp(16px, 3vw, 42px) 48px; display:grid; grid-template-columns:230px minmax(0,1fr); gap:26px; }
+.sidebar { display:flex; flex-direction:column; gap:7px; }
+.nav-label { color:var(--muted); font-size:10px; font-weight:800; letter-spacing:.13em; padding:10px 12px 5px; }
+.nav { border:0; background:transparent; color:var(--muted); text-align:left; padding:12px 13px; border-radius:12px; cursor:pointer; font-weight:650; display:flex; gap:11px; align-items:center; }
+.nav.active { background:var(--green-soft); color:var(--site-primary); }
+.nav:hover { background:var(--surface); }
+.side-note { margin-top:auto; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:15px; font-size:12px; color:var(--muted); line-height:1.55; }
+.side-note strong { display:block; color:var(--site-on-background); margin-bottom:5px; }
+main { min-width:0; }
+.heading-row { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:22px; }
+.eyebrow { color:var(--site-primary); font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+h1 { margin:6px 0 5px; font-size:clamp(25px,3vw,34px); letter-spacing:-.055em; line-height:1.08; }
+.sub { color:var(--muted); font-size:13px; }
+.date-pill { background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:10px 14px; color:var(--muted); font-size:12px; white-space:nowrap; }
+.stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; margin-bottom:18px; }
+.stat, .panel { background:var(--surface); border:1px solid var(--border); border-radius:18px; }
+.stat { padding:17px; }
+.stat-top { display:flex; justify-content:space-between; color:var(--muted); font-size:12px; gap:8px; }
+.stat-icon { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; background:var(--green-soft); }
+.stat-value { font-size:27px; font-weight:800; letter-spacing:-.05em; margin:13px 0 4px; }
+.stat-foot { font-size:11px; color:var(--muted); }
+.positive { color:var(--site-primary); font-weight:750; }
+.content-grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(280px,.85fr); gap:16px; }
+.panel { padding:19px; min-width:0; }
+.panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+.panel h2 { margin:0; font-size:16px; letter-spacing:-.025em; }
+.panel-desc { color:var(--muted); font-size:11px; margin-top:4px; }
+.tag { border-radius:999px; padding:6px 9px; font-size:10px; font-weight:800; color:var(--site-primary); background:var(--green-soft); }
+.chart { height:190px; display:flex; align-items:flex-end; gap:clamp(7px,2vw,17px); padding:12px 4px 0; border-bottom:1px solid var(--border); }
+.bar-wrap { height:100%; flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:8px; min-width:0; }
+.bar { width:min(100%,34px); border-radius:8px 8px 3px 3px; background:linear-gradient(180deg,#4EAA8B,#176B5B); min-height:5px; position:relative; }
+.bar.today { background:linear-gradient(180deg,#F2CB72,#D89B28); }
+.bar-label { color:var(--muted); font-size:10px; }
+.legend { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:12px; }
+.capture-card { background:var(--surface-2); border:1px dashed #9BB8AA; border-radius:15px; padding:13px; }
+.camera-box { min-height:145px; border-radius:12px; background:linear-gradient(145deg,#203B33,#12251F); color:#D9EEE4; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:15px; position:relative; overflow:hidden; }
+.camera-box:before { content:""; position:absolute; width:125px; height:125px; border:1px solid rgba(180,235,209,.35); border-radius:50%; }
+.camera-icon { font-size:29px; margin-bottom:8px; z-index:1; }
+.camera-box strong, .camera-box small { z-index:1; }
+.camera-box small { color:#A8C9B9; margin-top:5px; font-size:10px; }
+.capture-actions { display:flex; gap:8px; margin-top:11px; }
+.btn { border:0; border-radius:10px; padding:10px 13px; cursor:pointer; font-weight:750; font-size:12px; }
+.btn-primary { background:var(--site-primary); color:white; flex:1; }
+.btn-secondary { background:var(--surface); color:var(--site-on-background); border:1px solid var(--border); }
+.btn:hover { filter:brightness(1.06); transform:translateY(-1px); }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px; }
+.field label { display:block; color:var(--muted); font-size:10px; font-weight:750; margin-bottom:5px; }
+.field input, .field select { width:100%; border:1px solid var(--border); background:var(--surface); color:var(--site-on-background); border-radius:9px; padding:10px; outline:none; font-size:12px; }
+.field input:focus, .field select:focus { border-color:var(--site-primary); }
+.log-panel { margin-top:16px; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; text-align:left; }
+th { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; font-weight:800; padding:10px 8px; border-bottom:1px solid var(--border); }
+td { padding:12px 8px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tr:last-child td { border-bottom:0; }
+.student { display:flex; align-items:center; gap:9px; font-weight:700; }
+.avatar { width:29px; height:29px; border-radius:10px; display:grid; place-items:center; background:var(--amber-soft); color:#8B6419; font-size:10px; font-weight:800; }
+.weight { font-weight:800; }
+.status { font-size:10px; padding:5px 8px; border-radius:999px; background:var(--green-soft); color:var(--site-primary); font-weight:800; }
+.status.high { background:var(--red-soft); color:#B65B49; }
+.section { display:none; }
+.section.active { display:block; }
+.empty { color:var(--muted); text-align:center; padding:22px; font-size:12px; }
+.toast { position:fixed; right:20px; bottom:20px; background:#173D32; color:white; padding:12px 16px; border-radius:12px; font-size:12px; box-shadow:0 12px 35px #0002; opacity:0; transform:translateY(10px); transition:.25s; pointer-events:none; }
+.toast.show { opacity:1; transform:translateY(0); }
+.disclaimer { color:var(--muted); font-size:10px; line-height:1.5; margin-top:12px; }
+@media(max-width:980px) { .layout { grid-template-columns:1fr; } .sidebar { flex-direction:row; flex-wrap:wrap; } .nav-label,.side-note { display:none; } .nav { padding:9px 11px; } }
+@media(max-width:720px) { .stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .content-grid { grid-template-columns:1fr; } .heading-row { align-items:flex-start; flex-direction:column; } .top-meta { display:none; } }
+@media(max-width:420px) { .stats { gap:8px; } .stat { padding:12px; } .stat-value { font-size:23px; } .field-row { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">♻</div><span>MessMind</span></div>
+    <div class="top-meta"><span><i class="live-dot"></i> Prototype dashboard</span><span>Hostel Mess · Admin</span></div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="nav-label">WORKSPACE</div>
+      <button class="nav active" data-target="overview">▦ &nbsp; Overview</button>
+      <button class="nav" data-target="capture">◎ &nbsp; Capture & log</button>
+      <button class="nav" data-target="students">♙ &nbsp; Student records</button>
+      <button class="nav" data-target="reports">▤ &nbsp; Reports</button>
+      <div class="side-note"><strong>Prototype mode</strong>Sample records are stored in this browser session. Live ESP32-CAM, Arduino and permanent database connections are the next integration step.</div>
+    </aside>
+    <main>
+      <section id="overview" class="section active">
+        <div class="heading-row">
+          <div><div class="eyebrow">Hostel mess analytics</div><h1>Good morning, Admin</h1><div class="sub">A clearer picture of what's left on the plate.</div></div>
+          <div class="date-pill" id="todayDate"></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="stat-top"><span>Food wasted today</span><span class="stat-icon">⚖</span></div><div class="stat-value" id="totalWaste">8.42 <small style="font-size:13px">kg</small></div><div class="stat-foot"><span class="positive">↓ 12%</span> vs yesterday</div></div>
+          <div class="stat"><div class="stat-top"><span>Students recorded</span><span class="stat-icon">♙</span></div><div class="stat-value" id="studentCount">64</div><div class="stat-foot">Across today's meals</div></div>
+          <div class="stat"><div class="stat-top"><span>Average per student</span><span class="stat-icon">◷</span></div><div class="stat-value" id="averageWaste">132<small style="font-size:13px"> g</small></div><div class="stat-foot">Today's average waste</div></div>
+          <div class="stat"><div class="stat-top"><span>Waste goal</span><span class="stat-icon">◎</span></div><div class="stat-value">10.0<small style="font-size:13px"> kg</small></div><div class="stat-foot"><span class="positive">84%</span> of daily limit used</div></div>
+        </div>
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head"><div><h2>Food waste trend</h2><div class="panel-desc">Total recorded waste · last 7 days</div></div><span class="tag">Weekly</span></div>
+            <div class="chart" id="weeklyChart">
+              <div class="bar-wrap"><div class="bar" style="height:54%"></div><span class="bar-label">Mon</span></div>
+              <div class="bar-wrap"><div class="bar" style="height:73%"></div><span class="bar-label">Tue</span></div>
+              <div class="bar-wrap"><div class="bar" style="height:61%"></div><span class="bar-label">Wed</span></div>
+              <div class="bar-wrap"><div class="bar" style="height:87%"></div><span class="bar-label">Thu</span></div>
+              <div class="bar-wrap"><div class="bar" style="height:69%"></div><span class="bar-label">Fri</span></div>
+              <div class="bar-wrap"><div class="bar" style="height:78%"></div><span class="bar-label">Sat</span></div>
+              <div class="bar-wrap"><div class="bar today" style="height:58%"></div><span class="bar-label">Sun</span></div>
+            </div>
+            <div class="legend"><span>0 kg</span><span>Daily total (illustrative demo data)</span><span>12 kg</span></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h2>Quick capture</h2><div class="panel-desc">Register a student's waste event</div></div><span class="tag">Demo</span></div>
+            <div class="capture-card">
+              <div class="camera-box" id="cameraBox"><div class="camera-icon">▣</div><strong>Camera connection pending</strong><small>ESP32-CAM stream will appear here after hardware integration</small></div>
+              <div class="capture-actions"><button class="btn btn-primary" id="captureBtn">Capture face (demo)</button><button class="btn btn-secondary" id="clearBtn">Reset</button></div>
+              <div class="field-row">
+                <div class="field"><label for="studentSelect">Student</label><select id="studentSelect"><option value="Aarav Sharma">Aarav Sharma · LPU001</option><option value="Diya Patel">Diya Patel · LPU014</option><option value="Kabir Singh">Kabir Singh · LPU022</option><option value="Meera Reddy">Meera Reddy · LPU031</option></select></div>
+                <div class="field"><label for="wasteInput">Waste weight (grams)</label><input id="wasteInput" type="number" min="1" max="5000" value="125"></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label for="mealSelect">Meal</label><select id="mealSelect"><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option></select></div>
+                <div class="field"><label for="idInput">Student ID</label><input id="idInput" value="LPU001" readonly></div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-top:11px" id="saveBtn">Save waste record</button>
+            </div>
+            <div class="disclaimer">Demo only: face capture is simulated; no camera is accessed and no face image is stored. Connect ESP32-CAM and a consent-based recognition service for real identification.</div>
+          </div>
+        </div>
+        <div class="panel log-panel">
+          <div class="panel-head"><div><h2>Recent waste records</h2><div class="panel-desc">Latest student deposits</div></div><button class="btn btn-secondary" data-jump="students">View all</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Student</th><th>Student ID</th><th>Meal</th><th>Waste</th><th>Time</th><th>Flag</th></tr></thead><tbody id="recentRows"></tbody></table></div>
+        </div>
+      </section>
+      <section id="capture" class="section">
+        <div class="heading-row"><div><div class="eyebrow">Waste event registration</div><h1>Capture & log</h1><div class="sub">Identify a student, measure the leftover food, save one event.</div></div></div>
+        <div class="panel" style="max-width:650px"><div class="panel-head"><div><h2>New waste event</h2><div class="panel-desc">Camera and sensor integrations are simulated in this preview.</div></div><span class="tag">Prototype</span></div>
+          <div class="camera-box" id="cameraBox2"><div class="camera-icon">▣</div><strong>ESP32-CAM not connected</strong><small>Live image preview will be added during hardware integration</small></div>
+          <div class="capture-actions"><button class="btn btn-primary" id="captureBtn2">Capture face (demo)</button><button class="btn btn-secondary" id="resetBtn2">Reset</button></div>
+          <div class="field-row"><div class="field"><label for="studentSelect2">Student</label><select id="studentSelect2"><option>Aarav Sharma</option><option>Diya Patel</option><option>Kabir Singh</option><option>Meera Reddy</option></select></div><div class="field"><label for="wasteInput2">Waste weight (grams)</label><input id="wasteInput2" type="number" min="1" max="5000" value="125"></div></div>
+          <div class="field-row"><div class="field"><label for="mealSelect2">Meal</label><select id="mealSelect2"><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option></select></div><div class="field"><label>Measurement source</label><input value="Manual demo input · HX711 later" readonly></div></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:12px" id="saveBtn2">Save waste record</button>
+          <div class="disclaimer">For the real build, a record should be saved only after a confirmed face match and a stable load-cell weight change. Unknown faces should not be assigned to a student.</div>
+        </div>
+      </section>
+      <section id="students" class="section">
+        <div class="heading-row"><div><div class="eyebrow">Student records</div><h1>Student waste history</h1><div class="sub">Each row represents one food-waste event.</div></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>All recorded events</h2><div class="panel-desc">New demo entries appear here immediately.</div></div><span class="tag" id="recordCount">4 records</span></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Student ID</th><th>Meal</th><th>Waste</th><th>Date & time</th><th>Flag</th></tr></thead><tbody id="allRows"></tbody></table></div></div>
+      </section>
+      <section id="reports" class="section">
+        <div class="heading-row"><div><div class="eyebrow">Insights</div><h1>Waste reports</h1><div class="sub">A quick view of the impact of food left uneaten.</div></div></div>
+        <div class="stats"><div class="stat"><div class="stat-top">Total logged in demo</div><div class="stat-value" id="reportTotal">1.12 kg</div><div class="stat-foot">Across visible sample events</div></div><div class="stat"><div class="stat-top">Highest event</div><div class="stat-value" id="highestEvent">280 g</div><div class="stat-foot">Largest single deposit</div></div></div>
+        <div class="panel"><h2>Project measurement logic</h2><p class="sub" style="line-height:1.7">The load cell measures the increase in the waste container's weight during a student's deposit. The website stores that event against a verified student ID, meal and timestamp. A dashboard can then total waste per student, per meal and per day.</p><p class="sub" style="line-height:1.7"><strong>Important:</strong> This demo uses sample values. Real totals will come from Arduino/HX711 readings, not from the illustrative weekly chart.</p><button class="btn btn-secondary" id="exportBtn">Export records as CSV</button></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast">Record saved</div>
+<script>
+const ids = {"Aarav Sharma":"LPU001","Diya Patel":"LPU014","Kabir Singh":"LPU022","Meera Reddy":"LPU031"};
+let records = [
+ {name:"Aarav Sharma",id:"LPU001",meal:"Lunch",weight:125,time:"12:42 PM",date:"Today"},
+ {name:"Diya Patel",id:"LPU014",meal:"Lunch",weight:80,time:"12:36 PM",date:"Today"},
+ {name:"Kabir Singh",id:"LPU022",meal:"Breakfast",weight:280,time:"08:18 AM",date:"Today"},
+ {name:"Meera Reddy",id:"LPU031",meal:"Breakfast",weight:95,time:"08:04 AM",date:"Today"}
+];
+let faceDemo = false;
+const $ = id => document.getElementById(id);
+$("todayDate").textContent = new Date().toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+function showToast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2300);}
+function flag(w){return w>=250?'<span class="status high">High</span>':'<span class="status">Recorded</span>';}
+function row(r){return `<tr><td><div class="student"><span class="avatar">${r.name.split(" ").map(x=>x[0]).join("")}</span>${r.name}</div></td><td>${r.id}</td><td>${r.meal}</td><td class="weight">${r.weight} g</td><td>${r.date} · ${r.time}</td><td>${flag(r.weight)}</td></tr>`;}
+function render(){
+ const sorted=[...records].reverse();
+ $("recentRows").innerHTML=sorted.slice(0,5).map(row).join("");
+ $("allRows").innerHTML=sorted.map(row).join("");
+ $("recordCount").textContent=records.length+" records";
+ const total=records.reduce((s,r)=>s+r.weight,0);
+ $("reportTotal").textContent=(total/1000).toFixed(2)+" kg";
+ $("highestEvent").textContent=Math.max(...records.map(r=>r.weight))+" g";
+ const today=records.filter(r=>r.date==="Today");
+ const todayTotal=today.reduce((s,r)=>s+r.weight,0);
+ $("totalWaste").innerHTML=(todayTotal/1000).toFixed(2)+' <small style="font-size:13px">kg</small>';
+ $("studentCount").textContent=new Set(today.map(r=>r.id)).size;
+ $("averageWaste").innerHTML=Math.round(todayTotal/Math.max(1,today.length))+'<small style="font-size:13px"> g</small>';
+}
+function setStudent(name, prefix=""){const id=ids[name];if($(prefix+"idInput"))$(prefix+"idInput").value=id;}
+$("studentSelect").addEventListener("change",e=>setStudent(e.target.value));
+function capture(boxId){faceDemo=true;$(boxId).innerHTML='<div class="camera-icon">✓</div><strong>Demo face captured</strong><small>Sample identity selected · live ESP32-CAM not connected</small>';showToast("Demo capture complete — select student and save");}
+$("captureBtn").onclick=()=>capture("cameraBox");
+$("captureBtn2").onclick=()=>capture("cameraBox2");
+function reset(boxId){faceDemo=false;$(boxId).innerHTML='<div class="camera-icon">▣</div><strong>ESP32-CAM not connected</strong><small>Live image preview will be added during hardware integration</small>';}
+$("clearBtn").onclick=()=>reset("cameraBox");
+$("resetBtn2").onclick=()=>reset("cameraBox2");
+function save(nameId,weightId,mealId,requireCapture=true){
+ const name=$(nameId).value, weight=Number($(weightId).value), meal=$(mealId).value;
+ if(requireCapture&&!faceDemo){showToast("Capture a face first (demo)");return;}
+ if(!Number.isFinite(weight)||weight<=0||weight>5000){showToast("Enter a valid weight from 1–5000 g");return;}
+ const now=new Date();
+ records.push({name,id:ids[name],meal,weight,time:now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),date:"Today"});
+ faceDemo=false;render();showToast("Waste record saved for "+name);
+ if(nameId==="studentSelect")reset("cameraBox");else reset("cameraBox2");
+}
+$("saveBtn").onclick=()=>save("studentSelect","wasteInput","mealSelect");
+$("saveBtn2").onclick=()=>save("studentSelect2","wasteInput2","mealSelect2");
+document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".nav").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.target));}));
+document.querySelectorAll("[data-jump]").forEach(b=>b.addEventListener("click",()=>document.querySelector('[data-target="'+b.dataset.jump+'"]').click()));
+$("exportBtn").onclick=()=>{const csv=["Student,Student ID,Meal,Waste grams,Date,Time",...records.map(r=>[r.name,r.id,r.meal,r.weight,r.date,r.time].join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="messmind-waste-records.csv";a.click();URL.revokeObjectURL(a.href);showToast("CSV export created");};
+render();
+</script>
+</body>
+</html>
