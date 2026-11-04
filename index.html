@@ -242,6 +242,11 @@ function save(nameId,weightId,mealId,requireCapture=true){
  if(!Number.isFinite(weight)||weight<=0||weight>5000){showToast("Enter a valid weight from 1–5000 g");return;}
  const now=new Date();
  records.push({name,id:ids[name],meal,weight,time:now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),date:"Today"});
+ fetch('/api/records', {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({ name, studentId: ids[name], meal, weight })
+ }).catch(()=>{});
  faceDemo=false;render();showToast("Waste record saved for "+name);
  if(nameId==="studentSelect")reset("cameraBox");else reset("cameraBox2");
 }
@@ -270,6 +275,27 @@ function handleLogout() {
 }
 
 render();
+
+async function loadServerRecords() {
+  try {
+    const res = await fetch('/api/records');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        records = data.map(r => ({
+          name: r.name,
+          id: r.studentId,
+          meal: r.meal,
+          weight: r.weight,
+          time: r.time,
+          date: r.date
+        }));
+        render();
+      }
+    }
+  } catch(e) {}
+}
+loadServerRecords();
 </script>
 </body>
 </html>
