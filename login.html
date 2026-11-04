@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login — MessMind Smart Food Waste Monitor</title>
+<style>
+:root {
+  --site-primary: #176B5B;
+  --site-primary-hover: #125548;
+  --site-on-primary: #FFFFFF;
+  --site-secondary: #E9B44C;
+  --site-background: #F3F6F4;
+  --site-on-background: #18231F;
+  --surface: #FFFFFF;
+  --surface-2: #F7FAF8;
+  --muted: #6B7B74;
+  --border: #E0E9E3;
+  --green-soft: #E6F3EE;
+  --amber-soft: #FFF4D9;
+  --red-soft: #FCEAE6;
+  --danger: #B65B49;
+  --site-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--site-font);
+  background: var(--site-background);
+  color: var(--site-on-background);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  padding: 20px 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-size: 22px;
+  color: var(--site-primary);
+  text-decoration: none;
+}
+.brand-mark {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--site-primary);
+  color: #fff;
+  font-size: 20px;
+}
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--site-primary);
+  background: var(--green-soft);
+  padding: 6px 14px;
+  border-radius: 999px;
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #176B5B;
+  display: inline-block;
+}
+.main-wrapper {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 20px clamp(16px, 4vw, 40px) 40px;
+}
+.login-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: clamp(24px, 5vw, 36px);
+  box-shadow: 0 10px 30px rgba(23, 107, 91, 0.05);
+}
+.card-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.card-header h1 {
+  font-size: 24px;
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
+  color: var(--site-on-background);
+}
+.card-header p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.role-tabs {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 22px;
+}
+.role-tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.role-tab.active {
+  background: var(--surface);
+  color: var(--site-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--site-on-background);
+  margin-bottom: 6px;
+}
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-wrap input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--site-on-background);
+  outline: none;
+  transition: 0.2s;
+  font-family: inherit;
+}
+.input-wrap input:focus {
+  border-color: var(--site-primary);
+  box-shadow: 0 0 0 3px rgba(23, 107, 91, 0.12);
+}
+.toggle-pwd {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin: 14px 0 20px;
+}
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.remember-me input {
+  accent-color: var(--site-primary);
+}
+.forgot-pwd {
+  color: var(--site-primary);
+  text-decoration: none;
+  font-weight: 700;
+}
+.forgot-pwd:hover {
+  text-decoration: underline;
+}
+.btn-submit {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: var(--site-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+  letter-spacing: -0.01em;
+}
+.btn-submit:hover {
+  background: var(--site-primary-hover);
+  transform: translateY(-1px);
+}
+.error-msg {
+  background: var(--red-soft);
+  color: var(--danger);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: none;
+}
+.demo-accounts {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border);
+}
+.demo-accounts-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 10px;
+  text-align: center;
+}
+.demo-chips {
+  display: flex;
+  gap: 8px;
+}
+.demo-chip {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.2s;
+}
+.demo-chip:hover {
+  border-color: var(--site-primary);
+  background: var(--green-soft);
+}
+.demo-chip strong {
+  display: block;
+  font-size: 12px;
+  color: var(--site-on-background);
+}
+.demo-chip small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.card-footer {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 18px;
+  line-height: 1.5;
+}
+@media (max-width: 480px) {
+  .header { padding: 16px 20px; }
+  .demo-chips { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <div class="brand-mark">♻</div>
+      <span>MessMind</span>
+    </div>
+    <div class="live-badge">
+      <span class="live-dot"></span> IoT Portal
+    </div>
+  </header>
+
+  <main class="main-wrapper">
+    <div class="login-card">
+      <div class="card-header">
+        <h1>Welcome Back</h1>
+        <p>Hostel Mess Food Waste Monitoring & Analytics</p>
+      </div>
+
+      <div class="role-tabs">
+        <button type="button" class="role-tab active" id="tabAdmin" onclick="selectRole('admin')">Admin / Mess Incharge</button>
+        <button type="button" class="role-tab" id="tabStudent" onclick="selectRole('student')">Student Portal</button>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="usernameInput" id="usernameLabel">Admin Email / ID</label>
+          <div class="input-wrap">
+            <input type="text" id="usernameInput" placeholder="admin@messmind.edu" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="passwordInput">Password</label>
+          <div class="input-wrap">
+            <input type="password" id="passwordInput" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="toggle-pwd" id="togglePwd" onclick="togglePasswordVisibility()">👁</button>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" id="rememberMe" checked>
+            <span>Keep me signed in</span>
+          </label>
+          <a href="#" class="forgot-pwd" onclick="alert('For demo access, please click one of the Quick Demo Logins below.')">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Sign In to Dashboard →</button>
+      </form>
+
+      <div class="demo-accounts">
+        <div class="demo-accounts-title">Quick Demo Logins</div>
+        <div class="demo-chips">
+          <button type="button" class="demo-chip" onclick="fillDemo('admin')">
+            <strong>👑 Admin Incharge</strong>
+            <small>Full Analytics & Controls</small>
+          </button>
+          <button type="button" class="demo-chip" onclick="fillDemo('student')">
+            <strong>🎓 Student Record</strong>
+            <small>Aarav Sharma · LPU001</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        Hardware Station (ESP32-CAM / HX711 RFID) auto-login enabled for registered hardware terminals.
+      </div>
+    </div>
+  </main>
+
+<script>
+let activeRole = 'admin';
+
+function selectRole(role) {
+  activeRole = role;
+  const tabAdmin = document.getElementById('tabAdmin');
+  const tabStudent = document.getElementById('tabStudent');
+  const usernameLabel = document.getElementById('usernameLabel');
+  const usernameInput = document.getElementById('usernameInput');
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (role === 'admin') {
+    tabAdmin.classList.add('active');
+    tabStudent.classList.remove('active');
+    usernameLabel.textContent = 'Admin Email / ID';
+    usernameInput.placeholder = 'admin@messmind.edu';
+    submitBtn.textContent = 'Sign In to Dashboard →';
+  } else {
+    tabStudent.classList.add('active');
+    tabAdmin.classList.remove('active');
+    usernameLabel.textContent = 'Student Registration Number';
+    usernameInput.placeholder = 'LPU001 or student@messmind.edu';
+    submitBtn.textContent = 'Access Student Portal →';
+  }
+}
+
+function fillDemo(role) {
+  selectRole(role);
+  const uInput = document.getElementById('usernameInput');
+  const pInput = document.getElementById('passwordInput');
+  const err = document.getElementById('errorMsg');
+  err.style.display = 'none';
+
+  if (role === 'admin') {
+    uInput.value = 'admin@messmind.edu';
+    pInput.value = 'admin123';
+  } else {
+    uInput.value = 'LPU001';
+    pInput.value = 'student123';
+  }
+}
+
+function togglePasswordVisibility() {
+  const pInput = document.getElementById('passwordInput');
+  const btn = document.getElementById('togglePwd');
+  if (pInput.type === 'password') {
+    pInput.type = 'text';
+    btn.textContent = '🔒';
+  } else {
+    pInput.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('usernameInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  const errorMsg = document.getElementById('errorMsg');
+
+  // Simple validation logic for demo & development
+  if (!username || !password) {
+    errorMsg.textContent = 'Please enter both your ID and password.';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  // Set user profile
+  let displayName = 'Mess Admin';
+  let studentId = '';
+
+  if (activeRole === 'admin') {
+    displayName = username.includes('@') ? username.split('@')[0].toUpperCase() : username;
+  } else {
+    displayName = 'Aarav Sharma';
+    studentId = username.toUpperCase();
+  }
+
+  const sessionData = {
+    role: activeRole,
+    username: username,
+    displayName: displayName,
+    studentId: studentId,
+    loggedInAt: new Date().toISOString()
+  };
+
+  localStorage.setItem('messmind_auth', JSON.stringify(sessionData));
+
+  // Redirect to dashboard
+  window.location.href = 'index.html';
+}
+
+// Auto-check if already logged in
+window.addEventListener('DOMContentLoaded', () => {
+  const currentAuth = localStorage.getItem('messmind_auth');
+  if (currentAuth) {
+    try {
+      const data = JSON.parse(currentAuth);
+      if (data && data.role) {
+        // Option to auto-redirect if session exists
+        // window.location.href = 'index.html';
+      }
+    } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>

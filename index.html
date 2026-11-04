@@ -101,6 +101,9 @@ tr:last-child td { border-bottom:0; }
 .toast { position:fixed; right:20px; bottom:20px; background:#173D32; color:white; padding:12px 16px; border-radius:12px; font-size:12px; box-shadow:0 12px 35px #0002; opacity:0; transform:translateY(10px); transition:.25s; pointer-events:none; }
 .toast.show { opacity:1; transform:translateY(0); }
 .disclaimer { color:var(--muted); font-size:10px; line-height:1.5; margin-top:12px; }
+.user-badge { display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.16); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; }
+.btn-logout { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; border-radius: 8px; padding: 6px 11px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.btn-logout:hover { background: rgba(255, 255, 255, 0.35); }
 @media(max-width:980px) { .layout { grid-template-columns:1fr; } .sidebar { flex-direction:row; flex-wrap:wrap; } .nav-label,.side-note { display:none; } .nav { padding:9px 11px; } }
 @media(max-width:720px) { .stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .content-grid { grid-template-columns:1fr; } .heading-row { align-items:flex-start; flex-direction:column; } .top-meta { display:none; } }
 @media(max-width:420px) { .stats { gap:8px; } .stat { padding:12px; } .stat-value { font-size:23px; } .field-row { grid-template-columns:1fr; } }
@@ -110,7 +113,10 @@ tr:last-child td { border-bottom:0; }
 <div class="app">
   <header class="topbar">
     <div class="brand"><div class="brand-mark">♻</div><span>MessMind</span></div>
-    <div class="top-meta"><span><i class="live-dot"></i> Prototype dashboard</span><span>Hostel Mess · Admin</span></div>
+    <div class="top-meta">
+      <span class="user-badge" id="userBadge"><i class="live-dot"></i> <span id="currentUserName">Admin</span></span>
+      <button class="btn-logout" id="logoutBtn" onclick="handleLogout()">Sign Out ⎋</button>
+    </div>
   </header>
   <div class="layout">
     <aside class="sidebar">
@@ -124,7 +130,7 @@ tr:last-child td { border-bottom:0; }
     <main>
       <section id="overview" class="section active">
         <div class="heading-row">
-          <div><div class="eyebrow">Hostel mess analytics</div><h1>Good morning, Admin</h1><div class="sub">A clearer picture of what's left on the plate.</div></div>
+          <div><div class="eyebrow">Hostel mess analytics</div><h1>Good morning, <span id="greetingName">Admin</span></h1><div class="sub">A clearer picture of what's left on the plate.</div></div>
           <div class="date-pill" id="todayDate"></div>
         </div>
         <div class="stats">
@@ -244,6 +250,25 @@ $("saveBtn2").onclick=()=>save("studentSelect2","wasteInput2","mealSelect2");
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".nav").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===b.dataset.target));}));
 document.querySelectorAll("[data-jump]").forEach(b=>b.addEventListener("click",()=>document.querySelector('[data-target="'+b.dataset.jump+'"]').click()));
 $("exportBtn").onclick=()=>{const csv=["Student,Student ID,Meal,Waste grams,Date,Time",...records.map(r=>[r.name,r.id,r.meal,r.weight,r.date,r.time].join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="messmind-waste-records.csv";a.click();URL.revokeObjectURL(a.href);showToast("CSV export created");};
+
+// Authentication state check
+const authData = JSON.parse(localStorage.getItem('messmind_auth') || 'null');
+if (!authData) {
+  window.location.href = 'login.html';
+} else {
+  if ($('currentUserName')) {
+    $('currentUserName').textContent = (authData.role === 'admin' ? '👑 ' : '🎓 ') + (authData.displayName || 'Admin');
+  }
+  if ($('greetingName')) {
+    $('greetingName').textContent = authData.displayName || 'Admin';
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('messmind_auth');
+  window.location.href = 'login.html';
+}
+
 render();
 </script>
 </body>
