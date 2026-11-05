@@ -159,12 +159,12 @@ tr:last-child td { border-bottom:0; }
               <div class="camera-box" id="cameraBox"><div class="camera-icon">▣</div><strong>Camera connection pending</strong><small>ESP32-CAM stream will appear here after hardware integration</small></div>
               <div class="capture-actions"><button class="btn btn-primary" id="captureBtn">Capture face (demo)</button><button class="btn btn-secondary" id="clearBtn">Reset</button></div>
               <div class="field-row">
-                <div class="field"><label for="studentSelect">Student</label><select id="studentSelect"><option value="Aarav Sharma">Aarav Sharma · LPU001</option><option value="Diya Patel">Diya Patel · LPU014</option><option value="Kabir Singh">Kabir Singh · LPU022</option><option value="Meera Reddy">Meera Reddy · LPU031</option></select></div>
+                <div class="field"><label for="studentSelect">Student</label><select id="studentSelect"><option value="Ganesh Reddy">Ganesh Reddy · LPU002</option><option value="Rohith">Rohith · LPU003</option><option value="HarinathReddy">HarinathReddy · LPU004</option><option value="Tharun">Tharun · LPU005</option></select></div>
                 <div class="field"><label for="wasteInput">Waste weight (grams)</label><input id="wasteInput" type="number" min="1" max="5000" value="125"></div>
               </div>
               <div class="field-row">
                 <div class="field"><label for="mealSelect">Meal</label><select id="mealSelect"><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option></select></div>
-                <div class="field"><label for="idInput">Student ID</label><input id="idInput" value="LPU001" readonly></div>
+                <div class="field"><label for="idInput">Student ID</label><input id="idInput" value="LPU002" readonly></div>
               </div>
               <button class="btn btn-primary" style="width:100%;margin-top:11px" id="saveBtn">Save waste record</button>
             </div>
@@ -181,7 +181,7 @@ tr:last-child td { border-bottom:0; }
         <div class="panel" style="max-width:650px"><div class="panel-head"><div><h2>New waste event</h2><div class="panel-desc">Camera and sensor integrations are simulated in this preview.</div></div><span class="tag">Prototype</span></div>
           <div class="camera-box" id="cameraBox2"><div class="camera-icon">▣</div><strong>ESP32-CAM not connected</strong><small>Live image preview will be added during hardware integration</small></div>
           <div class="capture-actions"><button class="btn btn-primary" id="captureBtn2">Capture face (demo)</button><button class="btn btn-secondary" id="resetBtn2">Reset</button></div>
-          <div class="field-row"><div class="field"><label for="studentSelect2">Student</label><select id="studentSelect2"><option>Aarav Sharma</option><option>Diya Patel</option><option>Kabir Singh</option><option>Meera Reddy</option></select></div><div class="field"><label for="wasteInput2">Waste weight (grams)</label><input id="wasteInput2" type="number" min="1" max="5000" value="125"></div></div>
+          <div class="field-row"><div class="field"><label for="studentSelect2">Student</label><select id="studentSelect2"><option>Ganesh Reddy</option><option>Rohith</option><option>HarinathReddy</option><option>Tharun</option></select></div><div class="field"><label for="wasteInput2">Waste weight (grams)</label><input id="wasteInput2" type="number" min="1" max="5000" value="125"></div></div>
           <div class="field-row"><div class="field"><label for="mealSelect2">Meal</label><select id="mealSelect2"><option>Breakfast</option><option selected>Lunch</option><option>Dinner</option></select></div><div class="field"><label>Measurement source</label><input value="Manual demo input · HX711 later" readonly></div></div>
           <button class="btn btn-primary" style="width:100%;margin-top:12px" id="saveBtn2">Save waste record</button>
           <div class="disclaimer">For the real build, a record should be saved only after a confirmed face match and a stable load-cell weight change. Unknown faces should not be assigned to a student.</div>
@@ -201,12 +201,12 @@ tr:last-child td { border-bottom:0; }
 </div>
 <div class="toast" id="toast">Record saved</div>
 <script>
-const ids = {"Aarav Sharma":"LPU001","Diya Patel":"LPU014","Kabir Singh":"LPU022","Meera Reddy":"LPU031"};
+const ids = {"Ganesh Reddy":"LPU002","Rohith":"LPU003","HarinathReddy":"LPU004","Tharun":"LPU005"};
 let records = [
- {name:"Aarav Sharma",id:"LPU001",meal:"Lunch",weight:125,time:"12:42 PM",date:"Today"},
- {name:"Diya Patel",id:"LPU014",meal:"Lunch",weight:80,time:"12:36 PM",date:"Today"},
- {name:"Kabir Singh",id:"LPU022",meal:"Breakfast",weight:280,time:"08:18 AM",date:"Today"},
- {name:"Meera Reddy",id:"LPU031",meal:"Breakfast",weight:95,time:"08:04 AM",date:"Today"}
+ {name:"Ganesh Reddy",id:"LPU002",meal:"Lunch",weight:120,time:"12:45 PM",date:"Today"},
+ {name:"Rohith",id:"LPU003",meal:"Lunch",weight:75,time:"12:38 PM",date:"Today"},
+ {name:"HarinathReddy",id:"LPU004",meal:"Breakfast",weight:260,time:"08:20 AM",date:"Today"},
+ {name:"Tharun",id:"LPU005",meal:"Breakfast",weight:90,time:"08:05 AM",date:"Today"}
 ];
 let faceDemo = false;
 const $ = id => document.getElementById(id);

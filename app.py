@@ -51,39 +51,37 @@ def init_db():
     """)
 
     # Seed default users
-    cursor.execute("SELECT COUNT(*) FROM users")
-    if cursor.fetchone()[0] == 0:
-        cursor.executemany("""
-            INSERT INTO users (username, password, role, display_name)
-            VALUES (?, ?, ?, ?)
-        """, [
-            ("admin@messmind.edu", "admin123", "admin", "Admin Incharge"),
-            ("LPU001", "student123", "student", "Aarav Sharma"),
-            ("LPU014", "student123", "student", "Diya Patel")
-        ])
+    cursor.executemany("""
+        INSERT OR IGNORE INTO users (username, password, role, display_name)
+        VALUES (?, ?, ?, ?)
+    """, [
+        ("admin@messmind.edu", "admin123", "admin", "Admin Incharge"),
+        ("LPU002", "student123", "student", "Ganesh Reddy"),
+        ("LPU003", "student123", "student", "Rohith"),
+        ("LPU004", "student123", "student", "HarinathReddy"),
+        ("LPU005", "student123", "student", "Tharun")
+    ])
 
     # Seed default students
-    cursor.execute("SELECT COUNT(*) FROM students")
-    if cursor.fetchone()[0] == 0:
-        cursor.executemany("""
-            INSERT INTO students (name, student_id)
-            VALUES (?, ?)
-        """, [
-            ("Aarav Sharma", "LPU001"),
-            ("Diya Patel", "LPU014"),
-            ("Kabir Singh", "LPU022"),
-            ("Meera Reddy", "LPU031")
-        ])
+    cursor.executemany("""
+        INSERT OR IGNORE INTO students (name, student_id)
+        VALUES (?, ?)
+    """, [
+        ("Ganesh Reddy", "LPU002"),
+        ("Rohith", "LPU003"),
+        ("HarinathReddy", "LPU004"),
+        ("Tharun", "LPU005")
+    ])
 
     # Seed sample records if empty
     cursor.execute("SELECT COUNT(*) FROM waste_records")
     if cursor.fetchone()[0] == 0:
         today_str = datetime.now().strftime("%Y-%m-%d")
         sample_records = [
-            ("Aarav Sharma", "LPU001", "Lunch", 125, today_str, "12:42 PM", "Recorded"),
-            ("Diya Patel", "LPU014", "Lunch", 80, today_str, "12:36 PM", "Recorded"),
-            ("Kabir Singh", "LPU022", "Breakfast", 280, today_str, "08:18 AM", "High"),
-            ("Meera Reddy", "LPU031", "Breakfast", 95, today_str, "08:04 AM", "Recorded")
+            ("Ganesh Reddy", "LPU002", "Lunch", 120, today_str, "12:45 PM", "Recorded"),
+            ("Rohith", "LPU003", "Lunch", 75, today_str, "12:38 PM", "Recorded"),
+            ("HarinathReddy", "LPU004", "Breakfast", 260, today_str, "08:20 AM", "High"),
+            ("Tharun", "LPU005", "Breakfast", 90, today_str, "08:05 AM", "Recorded")
         ]
         cursor.executemany("""
             INSERT INTO waste_records (student_name, student_id, meal, weight, record_date, record_time, flag)
@@ -240,6 +238,7 @@ if __name__ == "__main__":
     print("==================================================")
     print("MessMind Flask Server is running!")
     print("Database: messmind.db (SQLite)")
-    print("Running on http://127.0.0.1:5000")
+    print("Local access:   http://127.0.0.1:5000")
+    print("Network access: http://10.36.7.105:5000")
     print("==================================================")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
