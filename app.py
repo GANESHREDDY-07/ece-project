@@ -23,6 +23,9 @@ def db():
 
 def init_db():
     c = db(); q = c.cursor()
+    user_cols = [col[1] for col in q.execute("PRAGMA table_info(users)").fetchall()]
+    if user_cols and 'password_hash' not in user_cols:
+        q.execute('DROP TABLE users')
     q.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password_hash TEXT NOT NULL, role TEXT NOT NULL, display_name TEXT NOT NULL)''')
     q.execute('''CREATE TABLE IF NOT EXISTS waste_records (id INTEGER PRIMARY KEY AUTOINCREMENT, student_name TEXT NOT NULL, student_id TEXT NOT NULL, meal TEXT NOT NULL, weight REAL NOT NULL, record_date TEXT NOT NULL, record_time TEXT NOT NULL, flag TEXT NOT NULL)''')
     # Fresh install only: create the four agreed project accounts. Existing passwords are never overwritten.
