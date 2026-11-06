@@ -402,57 +402,22 @@ function togglePasswordVisibility() {
   }
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
   e.preventDefault();
-  const username = document.getElementById('usernameInput').value.trim();
+  const username = document.getElementById('usernameInput').value.trim().toUpperCase();
   const password = document.getElementById('passwordInput').value;
   const errorMsg = document.getElementById('errorMsg');
-
-  // Simple validation logic for demo & development
-  if (!username || !password) {
-    errorMsg.textContent = 'Please enter both your ID and password.';
-    errorMsg.style.display = 'block';
-    return;
-  }
-
-  // Set user profile
-  let displayName = 'Mess Admin';
-  let studentId = '';
-
-  if (activeRole === 'admin') {
-    displayName = username.includes('@') ? username.split('@')[0].toUpperCase() : username;
-  } else {
-    displayName = 'Aarav Sharma';
-    studentId = username.toUpperCase();
-  }
-
-  const sessionData = {
-    role: activeRole,
-    username: username,
-    displayName: displayName,
-    studentId: studentId,
-    loggedInAt: new Date().toISOString()
-  };
-
-  localStorage.setItem('messmind_auth', JSON.stringify(sessionData));
-
-  // Redirect to dashboard
-  window.location.href = 'index.html';
+  errorMsg.style.display = 'none';
+  if (!username || !password) { errorMsg.textContent = 'Please enter your MessMind ID and password.'; errorMsg.style.display = 'block'; return; }
+  try {
+    const response = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body:JSON.stringify({username,password}) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Login failed');
+    window.location.href = '/';
+  } catch (err) { errorMsg.textContent = err.message || 'Could not connect to the server.'; errorMsg.style.display = 'block'; }
 }
 
-// Auto-check if already logged in
-window.addEventListener('DOMContentLoaded', () => {
-  const currentAuth = localStorage.getItem('messmind_auth');
-  if (currentAuth) {
-    try {
-      const data = JSON.parse(currentAuth);
-      if (data && data.role) {
-        // Option to auto-redirect if session exists
-        // window.location.href = 'index.html';
-      }
-    } catch(e) {}
-  }
-});
+// The server owns the login session; credentials are never stored in browser localStorage.
 </script>
 </body>
 </html>

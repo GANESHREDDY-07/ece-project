@@ -1,21 +1,28 @@
-# MessMind — Smart Food Waste Monitor
+# MessMind — corrected login starter
 
-An ECE engineering project designed to monitor, analyze, and reduce hostel mess food waste using automated student recognition and load-cell weight tracking.
+## Run locally (Windows)
+1. Install Python 3.10 or newer.
+2. Open Command Prompt in this folder.
+3. Run `py -m venv .venv`
+4. Run `.venv\\Scripts\\activate`
+5. Run `pip install -r requirements.txt`
+6. Run `python app.py`
+7. Open `http://127.0.0.1:5000`
 
-## Overview
-**MessMind** helps campus mess administrations reduce food waste through accountability and data-driven kitchen planning. By pairing student identification with precise weight sensors at waste drop-off points, the system logs leftover food per student, per meal, and across the hostel.
+## Initial test accounts
+All four accounts are created automatically on the first run with the temporary password `ChangeMe@123`:
 
-## Key Features
-- **Real-Time Analytics Dashboard**: Visualizes daily waste totals, per-student averages, waste goal limits, and 7-day trends.
-- **Quick Capture & Event Logging**: Simulates student face recognition (ESP32-CAM) and waste container load-cell weight recording (HX711).
-- **Student History Records**: Searchable log showing student names, registration IDs, meal types (Breakfast, Lunch, Dinner), exact waste weight in grams, and high-waste alerts.
-- **CSV Data Export**: Easily export waste data for administrative review and statistical analysis.
+| Person | MessMind ID | Role |
+|---|---|---|
+| Ganesh Reddy | LPU001 | Admin |
+| Rohith | LPU002 | Member |
+| HarinathReddy | LPU003 | Member |
+| Tharun | LPU004 | Member |
 
-## Hardware Architecture (Integration Roadmap)
-1. **Face Recognition Module**: ESP32-CAM module to capture and identify students at the disposal counter.
-2. **Weight Measurement Module**: HX711 load cell sensor to measure the incremental weight added to the disposal bin.
-3. **Microcontroller / Gateway**: Arduino / ESP32 sending data over WiFi/HTTP to the central dashboard.
+Change the temporary password before putting this app on the public internet. Set `MESSMIND_INITIAL_PASSWORD` before the first run to use a different initial password. Existing accounts are not overwritten when the app restarts. If you need to reset this local test database, stop the server and delete `messmind.db`; this deletes its records and accounts, then restart.
 
-## Tech Stack
-- **Frontend**: HTML5, Modern Vanilla JavaScript, CSS3 Design Tokens
-- **Hardware Integration Target**: ESP32-CAM, HX711, Arduino
+## Security notes
+- Login is checked by Flask; passwords are stored as password hashes.
+- The browser no longer stores a fake login object in localStorage.
+- Members can read only their own records. Admin can read all records.
+- This starter uses SQLite for local testing. Do not deploy publicly until you configure a strong `MESSMIND_SECRET_KEY`, persistent production database, HTTPS, backups, and proper password-change flow. Face recognition/camera capture is not connected yet; the camera tile remains a demo placeholder.

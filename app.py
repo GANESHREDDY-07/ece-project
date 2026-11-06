@@ -1,244 +1,95 @@
-import os
-import sqlite3
+import os, sqlite3
 from datetime import datetime
-from flask import Flask, jsonify, request, send_from_directory
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, jsonify, request, send_from_directory, session
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "messmind.db")
+DB_PATH = os.environ.get('MESSMIND_DB_PATH', os.path.join(BASE_DIR, 'messmind.db'))
+app = Flask(__name__, static_folder=BASE_DIR, static_url_path='')
+app.secret_key = os.environ.get('MESSMIND_SECRET_KEY', 'local-development-only-change-this-secret')
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_SECURE=os.environ.get('COOKIE_SECURE', '0') == '1')
 
-app = Flask(__name__, static_folder=BASE_DIR, static_url_path="")
+MEMBERS = [
+    ('LPU001', 'Ganesh Reddy', 'admin'),
+    ('LPU002', 'Rohith', 'student'),
+    ('LPU003', 'HarinathReddy', 'student'),
+    ('LPU004', 'Tharun', 'student'),
+]
+INITIAL_PASSWORD = os.environ.get('MESSMIND_INITIAL_PASSWORD', 'ChangeMe@123')
 
-
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
+def db():
+    c = sqlite3.connect(DB_PATH); c.row_factory = sqlite3.Row; return c
 
 def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
+    c = db(); q = c.cursor()
+    q.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password_hash TEXT NOT NULL, role TEXT NOT NULL, display_name TEXT NOT NULL)''')
+    q.execute('''CREATE TABLE IF NOT EXISTS waste_records (id INTEGER PRIMARY KEY AUTOINCREMENT, student_name TEXT NOT NULL, student_id TEXT NOT NULL, meal TEXT NOT NULL, weight REAL NOT NULL, record_date TEXT NOT NULL, record_time TEXT NOT NULL, flag TEXT NOT NULL)''')
+    # Fresh install only: create the four agreed project accounts. Existing passwords are never overwritten.
+    for uid, name, role in MEMBERS:
+        q.execute('SELECT username FROM users WHERE username=?', (uid,))
+        if not q.fetchone():
+            q.execute('INSERT INTO users VALUES (?,?,?,?)', (uid, generate_password_hash(INITIAL_PASSWORD), role, name))
+    c.commit(); c.close()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL,
-            display_name TEXT NOT NULL
-        )
-    """)
+def login_required(fn):
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        if 'username' not in session: return jsonify({'error':'Please sign in'}), 401
+        return fn(*args, **kwargs)
+    return wrapped
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            student_id TEXT UNIQUE NOT NULL
-        )
-    """)
+def current_user():
+    return {'username':session['username'], 'role':session['role'], 'displayName':session['display_name'], 'studentId':session['username'] if session['role']=='student' else ''}
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS waste_records (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_name TEXT NOT NULL,
-            student_id TEXT NOT NULL,
-            meal TEXT NOT NULL,
-            weight REAL NOT NULL,
-            record_date TEXT NOT NULL,
-            record_time TEXT NOT NULL,
-            flag TEXT NOT NULL
-        )
-    """)
-
-    # Seed default users
-    cursor.executemany("""
-        INSERT OR IGNORE INTO users (username, password, role, display_name)
-        VALUES (?, ?, ?, ?)
-    """, [
-        ("admin@messmind.edu", "admin123", "admin", "Admin Incharge"),
-        ("LPU002", "student123", "student", "Ganesh Reddy"),
-        ("LPU003", "student123", "student", "Rohith"),
-        ("LPU004", "student123", "student", "HarinathReddy"),
-        ("LPU005", "student123", "student", "Tharun")
-    ])
-
-    # Seed default students
-    cursor.executemany("""
-        INSERT OR IGNORE INTO students (name, student_id)
-        VALUES (?, ?)
-    """, [
-        ("Ganesh Reddy", "LPU002"),
-        ("Rohith", "LPU003"),
-        ("HarinathReddy", "LPU004"),
-        ("Tharun", "LPU005")
-    ])
-
-    # Seed sample records if empty
-    cursor.execute("SELECT COUNT(*) FROM waste_records")
-    if cursor.fetchone()[0] == 0:
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        sample_records = [
-            ("Ganesh Reddy", "LPU002", "Lunch", 120, today_str, "12:45 PM", "Recorded"),
-            ("Rohith", "LPU003", "Lunch", 75, today_str, "12:38 PM", "Recorded"),
-            ("HarinathReddy", "LPU004", "Breakfast", 260, today_str, "08:20 AM", "High"),
-            ("Tharun", "LPU005", "Breakfast", 90, today_str, "08:05 AM", "Recorded")
-        ]
-        cursor.executemany("""
-            INSERT INTO waste_records (student_name, student_id, meal, weight, record_date, record_time, flag)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, sample_records)
-
-    conn.commit()
-    conn.close()
-
-
-@app.route("/")
-def index():
-    return send_from_directory(BASE_DIR, "index.html")
-
-
-@app.route("/login.html")
-def login_page():
-    return send_from_directory(BASE_DIR, "login.html")
-
-
-@app.route("/api/login", methods=["POST"])
+@app.route('/')
+def home(): return send_from_directory(BASE_DIR, 'index.html')
+@app.route('/login.html')
+def login_page(): return send_from_directory(BASE_DIR, 'login.html')
+@app.route('/api/login', methods=['POST'])
 def api_login():
-    data = request.get_json(silent=True) or {}
-    username = data.get("username", "").strip()
-    password = data.get("password", "")
+    data=request.get_json(silent=True) or {}; username=str(data.get('username','')).strip().upper(); password=str(data.get('password',''))
+    c=db(); user=c.execute('SELECT * FROM users WHERE username=?',(username,)).fetchone(); c.close()
+    if not user or not check_password_hash(user['password_hash'], password): return jsonify({'error':'Invalid ID or password'}), 401
+    session.clear(); session['username']=user['username']; session['role']=user['role']; session['display_name']=user['display_name']
+    return jsonify({'status':'success','user':current_user()})
 
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
-    user = cursor.fetchone()
-    conn.close()
+@app.route('/api/me')
+@login_required
+def me(): return jsonify({'user':current_user()})
 
-    if user:
-        return jsonify({
-            "status": "success",
-            "user": {
-                "username": user["username"],
-                "role": user["role"],
-                "displayName": user["display_name"],
-                "studentId": user["username"] if user["role"] == "student" else ""
-            }
-        })
-    else:
-        # Flexible login fallback for development demo
-        role = "admin" if "@" in username or "admin" in username.lower() else "student"
-        return jsonify({
-            "status": "success",
-            "user": {
-                "username": username,
-                "role": role,
-                "displayName": username.split("@")[0].upper() if "@" in username else username,
-                "studentId": username if role == "student" else ""
-            }
-        })
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def logout(): session.clear(); return jsonify({'status':'success'})
 
+@app.route('/api/records', methods=['GET','POST'])
+@login_required
+def records():
+    c=db()
+    if request.method=='GET':
+        if session['role']=='admin': rows=c.execute('SELECT * FROM waste_records ORDER BY id DESC').fetchall()
+        else: rows=c.execute('SELECT * FROM waste_records WHERE student_id=? ORDER BY id DESC',(session['username'],)).fetchall()
+        c.close(); return jsonify([{'id':r['id'],'name':r['student_name'],'studentId':r['student_id'],'meal':r['meal'],'weight':r['weight'],'date':r['record_date'],'time':r['record_time'],'flag':r['flag']} for r in rows])
+    data=request.get_json(silent=True) or {}
+    if session['role']=='student': student_id=session['username']
+    else: student_id=str(data.get('studentId','')).strip().upper()
+    member=next((m for m in MEMBERS if m[0]==student_id),None)
+    try: weight=float(data.get('weight',0))
+    except (TypeError,ValueError): weight=0
+    meal=str(data.get('meal','Lunch')).strip().title()
+    if not member or not (0 < weight <= 5000) or meal not in ('Breakfast','Lunch','Dinner'):
+        c.close(); return jsonify({'error':'Choose a valid student, meal and weight (1–5000 g)'}),400
+    now=datetime.now(); date=now.strftime('%Y-%m-%d'); tm=now.strftime('%I:%M %p'); flag='High' if weight>=250 else 'Recorded'
+    cur=c.execute('INSERT INTO waste_records(student_name,student_id,meal,weight,record_date,record_time,flag) VALUES(?,?,?,?,?,?,?)',(member[1],member[0],meal,weight,date,tm,flag)); c.commit(); rid=cur.lastrowid; c.close()
+    return jsonify({'status':'success','record':{'id':rid,'name':member[1],'studentId':member[0],'meal':meal,'weight':weight,'date':date,'time':tm,'flag':flag}}),201
 
-@app.route("/api/records", methods=["GET"])
-def get_records():
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM waste_records ORDER BY id DESC")
-    rows = cursor.fetchall()
-    conn.close()
+@app.route('/api/stats')
+@login_required
+def stats():
+    c=db(); where='' if session['role']=='admin' else ' WHERE student_id=?'; params=() if session['role']=='admin' else (session['username'],)
+    rows=c.execute('SELECT weight,student_id,record_date FROM waste_records'+where,params).fetchall(); c.close()
+    today=datetime.now().strftime('%Y-%m-%d'); todays=[r for r in rows if r['record_date']==today]; total=sum(r['weight'] for r in todays); all_total=sum(r['weight'] for r in rows)
+    return jsonify({'todayTotalGrams':total,'todayTotalKg':round(total/1000,2),'studentCount':len(set(r['student_id'] for r in todays)),'averageWasteGrams':round(total/len(todays)) if todays else 0,'allTotalKg':round(all_total/1000,2),'highestEventGrams':max((r['weight'] for r in rows),default=0)})
 
-    records = [
-        {
-            "id": r["id"],
-            "name": r["student_name"],
-            "studentId": r["student_id"],
-            "meal": r["meal"],
-            "weight": r["weight"],
-            "date": r["record_date"],
-            "time": r["record_time"],
-            "flag": r["flag"]
-        }
-        for r in rows
-    ]
-    return jsonify(records)
-
-
-@app.route("/api/records", methods=["POST"])
-def add_record():
-    data = request.get_json(silent=True) or {}
-    name = data.get("name", "").strip()
-    student_id = data.get("studentId", "").strip()
-    meal = data.get("meal", "Lunch")
-    weight = float(data.get("weight", 0))
-
-    if not name or weight <= 0:
-        return jsonify({"error": "Invalid data"}), 400
-
-    now = datetime.now()
-    record_date = now.strftime("%Y-%m-%d")
-    record_time = now.strftime("%I:%M %p")
-    flag = "High" if weight >= 250 else "Recorded"
-
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO waste_records (student_name, student_id, meal, weight, record_date, record_time, flag)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (name, student_id, meal, weight, record_date, record_time, flag))
-    conn.commit()
-    new_id = cursor.lastrowid
-    conn.close()
-
-    return jsonify({
-        "status": "success",
-        "record": {
-            "id": new_id,
-            "name": name,
-            "studentId": student_id,
-            "meal": meal,
-            "weight": weight,
-            "date": record_date,
-            "time": record_time,
-            "flag": flag
-        }
-    }), 201
-
-
-@app.route("/api/stats", methods=["GET"])
-def get_stats():
-    conn = get_db()
-    cursor = conn.cursor()
-    today_str = datetime.now().strftime("%Y-%m-%d")
-
-    cursor.execute("SELECT weight, student_id FROM waste_records WHERE record_date = ?", (today_str,))
-    today_rows = cursor.fetchall()
-
-    today_total = sum(r["weight"] for r in today_rows)
-    student_count = len(set(r["student_id"] for r in today_rows))
-    avg_waste = round(today_total / max(1, len(today_rows))) if today_rows else 0
-
-    cursor.execute("SELECT weight FROM waste_records")
-    all_weights = [r["weight"] for r in cursor.fetchall()]
-    all_total = sum(all_weights)
-    max_event = max(all_weights) if all_weights else 0
-
-    conn.close()
-
-    return jsonify({
-        "todayTotalGrams": today_total,
-        "todayTotalKg": round(today_total / 1000.0, 2),
-        "studentCount": student_count,
-        "averageWasteGrams": avg_waste,
-        "allTotalKg": round(all_total / 1000.0, 2),
-        "highestEventGrams": max_event
-    })
-
-
-if __name__ == "__main__":
-    init_db()
-    print("==================================================")
-    print("MessMind Flask Server is running!")
-    print("Database: messmind.db (SQLite)")
-    print("Local access:   http://127.0.0.1:5000")
-    print("Network access: http://10.36.7.105:5000")
-    print("==================================================")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+if __name__=='__main__':
+    init_db(); print('MessMind running at http://127.0.0.1:5000'); app.run(host='0.0.0.0',port=int(os.environ.get('PORT',5000)),debug=False)

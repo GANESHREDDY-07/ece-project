@@ -159,7 +159,7 @@ tr:last-child td { border-bottom:0; }
               <div class="camera-box" id="cameraBox"><div class="camera-icon">▣</div><strong>Camera connection pending</strong><small>ESP32-CAM stream will appear here after hardware integration</small></div>
               <div class="capture-actions"><button class="btn btn-primary" id="captureBtn">Capture face (demo)</button><button class="btn btn-secondary" id="clearBtn">Reset</button></div>
               <div class="field-row">
-                <div class="field"><label for="studentSelect">Student</label><select id="studentSelect"><option value="Ganesh Reddy">Ganesh Reddy · LPU002</option><option value="Rohith">Rohith · LPU003</option><option value="HarinathReddy">HarinathReddy · LPU004</option><option value="Tharun">Tharun · LPU005</option></select></div>
+                <div class="field"><label for="studentSelect">Student</label><select id="studentSelect"><option value="Ganesh Reddy">Ganesh Reddy · LPU001</option><option value="Rohith">Rohith · LPU002</option><option value="HarinathReddy">HarinathReddy · LPU003</option><option value="Tharun">Tharun · LPU004</option></select></div>
                 <div class="field"><label for="wasteInput">Waste weight (grams)</label><input id="wasteInput" type="number" min="1" max="5000" value="125"></div>
               </div>
               <div class="field-row">
@@ -201,13 +201,8 @@ tr:last-child td { border-bottom:0; }
 </div>
 <div class="toast" id="toast">Record saved</div>
 <script>
-const ids = {"Ganesh Reddy":"LPU002","Rohith":"LPU003","HarinathReddy":"LPU004","Tharun":"LPU005"};
-let records = [
- {name:"Ganesh Reddy",id:"LPU002",meal:"Lunch",weight:120,time:"12:45 PM",date:"Today"},
- {name:"Rohith",id:"LPU003",meal:"Lunch",weight:75,time:"12:38 PM",date:"Today"},
- {name:"HarinathReddy",id:"LPU004",meal:"Breakfast",weight:260,time:"08:20 AM",date:"Today"},
- {name:"Tharun",id:"LPU005",meal:"Breakfast",weight:90,time:"08:05 AM",date:"Today"}
-];
+const ids = {"Ganesh Reddy":"LPU001","Rohith":"LPU002","HarinathReddy":"LPU003","Tharun":"LPU004"};
+let records = [];
 let faceDemo = false;
 const $ = id => document.getElementById(id);
 $("todayDate").textContent = new Date().toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short",year:"numeric"});
@@ -221,8 +216,9 @@ function render(){
  $("recordCount").textContent=records.length+" records";
  const total=records.reduce((s,r)=>s+r.weight,0);
  $("reportTotal").textContent=(total/1000).toFixed(2)+" kg";
- $("highestEvent").textContent=Math.max(...records.map(r=>r.weight))+" g";
- const today=records.filter(r=>r.date==="Today");
+ $("highestEvent").textContent=(records.length?Math.max(...records.map(r=>r.weight)):0)+" g";
+ const todayKey=[new Date().getFullYear(),String(new Date().getMonth()+1).padStart(2,"0"),String(new Date().getDate()).padStart(2,"0")].join("-");
+ const today=records.filter(r=>r.date===todayKey || r.date==="Today");
  const todayTotal=today.reduce((s,r)=>s+r.weight,0);
  $("totalWaste").innerHTML=(todayTotal/1000).toFixed(2)+' <small style="font-size:13px">kg</small>';
  $("studentCount").textContent=new Set(today.map(r=>r.id)).size;
@@ -236,18 +232,18 @@ $("captureBtn2").onclick=()=>capture("cameraBox2");
 function reset(boxId){faceDemo=false;$(boxId).innerHTML='<div class="camera-icon">▣</div><strong>ESP32-CAM not connected</strong><small>Live image preview will be added during hardware integration</small>';}
 $("clearBtn").onclick=()=>reset("cameraBox");
 $("resetBtn2").onclick=()=>reset("cameraBox2");
-function save(nameId,weightId,mealId,requireCapture=true){
+async function save(nameId,weightId,mealId,requireCapture=true){
  const name=$(nameId).value, weight=Number($(weightId).value), meal=$(mealId).value;
  if(requireCapture&&!faceDemo){showToast("Capture a face first (demo)");return;}
  if(!Number.isFinite(weight)||weight<=0||weight>5000){showToast("Enter a valid weight from 1–5000 g");return;}
  const now=new Date();
- records.push({name,id:ids[name],meal,weight,time:now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),date:"Today"});
- fetch('/api/records', {
-   method: 'POST',
-   headers: { 'Content-Type': 'application/json' },
-   body: JSON.stringify({ name, studentId: ids[name], meal, weight })
- }).catch(()=>{});
- faceDemo=false;render();showToast("Waste record saved for "+name);
+ try {
+   const response = await fetch('/api/records', {method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({name,studentId:ids[name],meal,weight})});
+   const result = await response.json();
+   if (!response.ok) throw new Error(result.error || 'Could not save record');
+   const r=result.record; records.unshift({name:r.name,id:r.studentId,meal:r.meal,weight:r.weight,time:r.time,date:r.date});
+   faceDemo=false;render();showToast("Waste record saved for "+r.name);
+ } catch(err) { showToast(err.message || 'Save failed'); return; }
  if(nameId==="studentSelect")reset("cameraBox");else reset("cameraBox2");
 }
 $("saveBtn").onclick=()=>save("studentSelect","wasteInput","mealSelect");
@@ -256,46 +252,35 @@ document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>{doc
 document.querySelectorAll("[data-jump]").forEach(b=>b.addEventListener("click",()=>document.querySelector('[data-target="'+b.dataset.jump+'"]').click()));
 $("exportBtn").onclick=()=>{const csv=["Student,Student ID,Meal,Waste grams,Date,Time",...records.map(r=>[r.name,r.id,r.meal,r.weight,r.date,r.time].join(","))].join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="messmind-waste-records.csv";a.click();URL.revokeObjectURL(a.href);showToast("CSV export created");};
 
-// Authentication state check
-const authData = JSON.parse(localStorage.getItem('messmind_auth') || 'null');
-if (!authData) {
-  window.location.href = 'login.html';
-} else {
-  if ($('currentUserName')) {
-    $('currentUserName').textContent = (authData.role === 'admin' ? '👑 ' : '🎓 ') + (authData.displayName || 'Admin');
-  }
-  if ($('greetingName')) {
-    $('greetingName').textContent = authData.displayName || 'Admin';
-  }
-}
-
-function handleLogout() {
-  localStorage.removeItem('messmind_auth');
-  window.location.href = 'login.html';
-}
-
-render();
-
-async function loadServerRecords() {
+// Authentication and role are verified by the Flask server, not browser storage.
+let authData = null;
+async function bootDashboard() {
   try {
-    const res = await fetch('/api/records');
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        records = data.map(r => ({
-          name: r.name,
-          id: r.studentId,
-          meal: r.meal,
-          weight: r.weight,
-          time: r.time,
-          date: r.date
-        }));
-        render();
-      }
+    const meResponse = await fetch('/api/me', {credentials:'same-origin'});
+    if (!meResponse.ok) { window.location.href='/login.html'; return; }
+    const me = await meResponse.json(); authData = me.user;
+    if ($('currentUserName')) $('currentUserName').textContent = (authData.role === 'admin' ? '👑 ' : '🎓 ') + authData.displayName;
+    if ($('greetingName')) $('greetingName').textContent = authData.displayName;
+    // Members can submit only their own waste; hide the student selector for them.
+    if (authData.role !== 'admin') {
+      document.querySelectorAll('#studentSelect,#studentSelect2').forEach(el => { el.closest('.field').style.display='none'; });
     }
-  } catch(e) {}
+    await loadServerRecords();
+  } catch(e) { window.location.href='/login.html'; }
 }
-loadServerRecords();
+async function handleLogout() {
+  try { await fetch('/api/logout',{method:'POST',credentials:'same-origin'}); } finally { window.location.href='/login.html'; }
+}
+async function loadServerRecords() {
+  const res=await fetch('/api/records',{credentials:'same-origin'});
+  if (res.status===401) { window.location.href='/login.html'; return; }
+  if (!res.ok) throw new Error('Unable to load records');
+  const data=await res.json();
+  records=data.map(r=>({name:r.name,id:r.studentId,meal:r.meal,weight:r.weight,time:r.time,date:r.date}));
+  render();
+}
+render();
+bootDashboard();
 </script>
 </body>
 </html>
