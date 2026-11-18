@@ -325,19 +325,26 @@ body {
           <a href="#" class="forgot-pwd" onclick="alert('For demo access, please click one of the Quick Demo Logins below.')">Forgot password?</a>
         </div>
 
+        <div style="background:var(--bg-glass, rgba(255,255,255,0.04));border:1px solid var(--border,#2d3748);border-radius:8px;padding:9px 12px;margin:12px 0;font-size:12px;color:var(--text-muted,#a0aec0);line-height:1.6;">
+          🔑 <strong>Quick Test Credentials:</strong><br>
+          • <strong>Admin:</strong> <code>LPU001</code> (or <code>admin@messmind.edu</code>)<br>
+          • <strong>Student:</strong> <code>LPU002</code>, <code>LPU003</code>, <code>LPU004</code><br>
+          • <strong>Password:</strong> <code>ChangeMe@123</code> (or <code>admin123</code> / <code>student123</code>)
+        </div>
+
         <button type="submit" class="btn-submit" id="submitBtn">Sign In to Dashboard →</button>
       </form>
 
       <div class="demo-accounts">
-        <div class="demo-accounts-title">Quick Demo Logins</div>
+        <div class="demo-accounts-title">Quick Demo Logins (Click to Autofill)</div>
         <div class="demo-chips">
           <button type="button" class="demo-chip" onclick="fillDemo('admin')">
             <strong>👑 Admin Incharge</strong>
-            <small>Full Analytics & Controls</small>
+            <small>Ganesh Reddy · LPU001</small>
           </button>
           <button type="button" class="demo-chip" onclick="fillDemo('student')">
             <strong>🎓 Student Record</strong>
-            <small>Ganesh Reddy · LPU002</small>
+            <small>Rohith · LPU002</small>
           </button>
         </div>
       </div>
@@ -363,13 +370,13 @@ function selectRole(role) {
     tabAdmin.classList.add('active');
     tabStudent.classList.remove('active');
     usernameLabel.textContent = 'Admin Email / ID';
-    usernameInput.placeholder = 'admin@messmind.edu';
+    usernameInput.placeholder = 'LPU001 or admin@messmind.edu';
     submitBtn.textContent = 'Sign In to Dashboard →';
   } else {
     tabStudent.classList.add('active');
     tabAdmin.classList.remove('active');
     usernameLabel.textContent = 'Student Registration Number';
-    usernameInput.placeholder = 'LPU002 or student@messmind.edu';
+    usernameInput.placeholder = 'LPU002, LPU003, or LPU004';
     submitBtn.textContent = 'Access Student Portal →';
   }
 }
@@ -382,11 +389,11 @@ function fillDemo(role) {
   err.style.display = 'none';
 
   if (role === 'admin') {
-    uInput.value = 'admin@messmind.edu';
-    pInput.value = 'admin123';
+    uInput.value = 'LPU001';
+    pInput.value = 'ChangeMe@123';
   } else {
     uInput.value = 'LPU002';
-    pInput.value = 'student123';
+    pInput.value = 'ChangeMe@123';
   }
 }
 
